@@ -47,36 +47,6 @@ export default function HomePage() {
     <div className="main-layout">
       <main className="main-content">
         <div className="main-content-centered">
-          {/* ヒーローセクション */}
-          <div
-            style={{
-              textAlign: "center",
-              padding: "var(--space-8) 0 var(--space-6)",
-            }}
-          >
-            <h1
-              style={{
-                fontSize: "var(--text-3xl)",
-                fontWeight: 800,
-                marginBottom: "var(--space-2)",
-                background:
-                  "linear-gradient(135deg, #0096fa, #0078d4, #00b4d8)",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-              }}
-            >
-              コードで世界を変えよう
-            </h1>
-            <p
-              style={{
-                color: "var(--color-text-secondary)",
-                fontSize: "var(--text-base)",
-              }}
-            >
-              エンジニアのためのコード共有プラットフォーム
-            </p>
-          </div>
 
           {/* タブ */}
           <div className="tabs">
