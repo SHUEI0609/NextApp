@@ -2,13 +2,12 @@
 // Why: detail.mdの要件に基づき、ユーザー・投稿・ソーシャル機能のモデルを定義
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 // NextAuth.js用のユーザーモデル

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import Header from "@/components/Header";
+import Providers from "@/components/Providers";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,20 +29,22 @@ export default function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <body className={`${inter.variable} ${jetbrainsMono.variable}`}>
-        <Header />
-        {children}
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            style: {
-              background: "#ffffff",
-              color: "#1f1f1f",
-              border: "1px solid #d6d9de",
-              borderRadius: "8px",
-              boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
-            },
-          }}
-        />
+        <Providers>
+          <Header />
+          {children}
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              style: {
+                background: "#ffffff",
+                color: "#1f1f1f",
+                border: "1px solid #d6d9de",
+                borderRadius: "8px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)",
+              },
+            }}
+          />
+        </Providers>
       </body>
     </html>
   );

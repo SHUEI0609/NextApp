@@ -1,81 +1,100 @@
-"use client";
-
-import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import PostCard from "@/components/PostCard";
-import { MOCK_POSTS } from "@/lib/mockData";
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
 import { calculateTrendScore } from "@/lib/utils";
 
 /**
  * トップページ - タイムライン
- * 「トレンド」「新着」「フォロー中」のタブ切り替え
+ * クエリパラメータ (?tab=trend|latest) でタブを切り替えるサーバーコンポーネント
  */
-export default function HomePage() {
-  const [activeTab, setActiveTab] = useState<"trend" | "latest" | "following">(
-    "trend"
-  );
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const activeTab = (resolvedSearchParams.tab as string) || "trend";
 
-  // 表示する投稿を取得（タブに応じてソート）
-  const getDisplayPosts = () => {
-    const publicPosts = MOCK_POSTS.filter((p) => !p.isDraft);
+  // DBから投稿を取得
+  const posts = await prisma.post.findMany({
+    where: { isDraft: false },
+    include: {
+      author: true,
+      files: true,
+      likes: true,
+      _count: {
+        select: { likes: true, comments: true },
+      },
+    },
+    orderBy: { createdAt: "desc" }, // 基本は降順で取得
+    take: 50,
+  });
 
-    switch (activeTab) {
-      case "trend":
-        // トレンドスコアで降順ソート
-        return [...publicPosts].sort(
-          (a, b) =>
-            calculateTrendScore(b._count.likes, b.createdAt) -
-            calculateTrendScore(a._count.likes, a.createdAt)
-        );
-      case "latest":
-        // 新着順
-        return [...publicPosts].sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-      case "following":
-        // フォロー中（モックではフィルタリングを省略）
-        return publicPosts.slice(0, 3);
-      default:
-        return publicPosts;
-    }
-  };
+  // タブに応じたソートとフィルタリング
+  let displayPosts = [...posts];
 
-  const displayPosts = getDisplayPosts();
+  if (activeTab === "trend") {
+    displayPosts.sort(
+      (a, b) =>
+        calculateTrendScore(b._count.likes, b.createdAt.toISOString()) -
+        calculateTrendScore(a._count.likes, a.createdAt.toISOString())
+    );
+  } else if (activeTab === "latest") {
+    // 取得時に既に降順ソート済み
+  } else if (activeTab === "following") {
+    // TODO: フォロー機能実装後に修正
+    displayPosts = posts.slice(0, 3);
+  }
 
   return (
     <div className="main-layout">
       <main className="main-content">
         <div className="main-content-centered">
-
           {/* タブ */}
           <div className="tabs">
-            <button
+            <Link
+              href="/?tab=trend"
               className={`tab ${activeTab === "trend" ? "active" : ""}`}
-              onClick={() => setActiveTab("trend")}
+              style={{ textDecoration: "none" }}
             >
               🔥 トレンド
-            </button>
-            <button
+            </Link>
+            <Link
+              href="/?tab=latest"
               className={`tab ${activeTab === "latest" ? "active" : ""}`}
-              onClick={() => setActiveTab("latest")}
+              style={{ textDecoration: "none" }}
             >
               ✨ 新着
-            </button>
-            <button
+            </Link>
+            <Link
+              href="/?tab=following"
               className={`tab ${activeTab === "following" ? "active" : ""}`}
-              onClick={() => setActiveTab("following")}
+              style={{ textDecoration: "none" }}
             >
               👥 フォロー中
-            </button>
+            </Link>
           </div>
 
           {/* 投稿一覧 */}
           <div className="post-grid">
             {displayPosts.length > 0 ? (
-              displayPosts.map((post) => (
-                <PostCard key={post.id} post={post} />
-              ))
+              displayPosts.map((post) => {
+                // PostCardData型に合わせるための変換
+                const postCardData = {
+                  ...post,
+                  isLiked: false, // TODO: ログインユーザーの「いいね」状態
+                  isBookmarked: false, // TODO: ログインユーザーの「ブックマーク」状態
+                  viewCount: 0, // TODO: 閲覧数機能
+                  _count: {
+                    likes: post._count.likes,
+                    comments: post._count.comments,
+                    bookmarks: 0, // TODO: ブックマーク数
+                  },
+                } as unknown as import("@/types/types").PostCardData;
+
+                return <PostCard key={post.id} post={postCardData} />;
+              })
             ) : (
               <div className="empty-state">
                 <div className="empty-state-icon">📭</div>

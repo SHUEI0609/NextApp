@@ -1,11 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiGithub, FiMail, FiLock, FiUser } from "react-icons/fi";
+import toast from "react-hot-toast";
+import { FiMail, FiLock, FiUser } from "react-icons/fi";
 
 /**
  * 新規登録ページ
+ * メール/パスワードでの新規ユーザー登録
  */
 export default function SignUpPage() {
     const [name, setName] = useState("");
@@ -13,16 +17,54 @@ export default function SignUpPage() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
         if (password !== confirmPassword) {
-            alert("パスワードが一致しません");
+            toast.error("パスワードが一致しません");
             return;
         }
+
         setIsLoading(true);
-        // TODO: ユーザー登録API呼び出し
-        setTimeout(() => setIsLoading(false), 1000);
+
+        try {
+            // 新規登録APIを呼び出し
+            const res = await fetch("/api/auth/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, password }),
+            });
+
+            const data = await res.json();
+
+            if (!res.ok) {
+                toast.error(data.error || "登録に失敗しました");
+                return;
+            }
+
+            // 登録成功後、自動ログイン
+            const signInResult = await signIn("credentials", {
+                email,
+                password,
+                redirect: false,
+            });
+
+            if (signInResult?.error) {
+                // 登録は成功したがログインに失敗した場合
+                toast.success("アカウントを作成しました。ログインしてください。");
+                router.push("/auth/signin");
+            } else {
+                toast.success("アカウントを作成しました！");
+                router.push("/");
+                router.refresh();
+            }
+        } catch {
+            toast.error("登録中にエラーが発生しました");
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -51,17 +93,6 @@ export default function SignUpPage() {
                     <p className="auth-subtitle">
                         Codexに参加して、あなたのコードを世界に共有しよう
                     </p>
-
-                    {/* GitHub OAuth */}
-                    <button
-                        className="btn btn-secondary btn-lg"
-                        style={{ width: "100%", gap: "var(--space-2)" }}
-                    >
-                        <FiGithub size={20} />
-                        GitHubで登録
-                    </button>
-
-                    <div className="auth-divider">または</div>
 
                     <form onSubmit={handleSubmit}>
                         <div className="form-group">

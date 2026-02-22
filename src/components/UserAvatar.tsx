@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { SupportedLanguage, LANGUAGE_COLORS } from "@/types/types";
 
 /**
@@ -43,10 +44,20 @@ export default function UserAvatar({
     return (
         <div
             className={`avatar ${sizeClass}`}
-            style={{ background: image ? "transparent" : colors[colorIndex] }}
+            style={{
+                background: image ? "transparent" : colors[colorIndex],
+                position: "relative",
+            }}
         >
             {image ? (
-                <img src={image} alt={name || "ユーザー"} />
+                <Image
+                    src={image}
+                    alt={name || "ユーザー"}
+                    fill
+                    sizes="48px"
+                    style={{ objectFit: "cover" }}
+                    unoptimized
+                />
             ) : (
                 <span>{initial}</span>
             )}

@@ -39,26 +39,32 @@ function highlightCode(code: string, language: string): string {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
+    const TOKEN_STR = "___TOK_STR___";
+    const TOKEN_COM = "___TOK_COM___";
+    const TOKEN_NUM = "___TOK_NUM___";
+    const TOKEN_KW = "___TOK_KW___";
+    const TOKEN_END = "___TOK_END___";
+
     // 文字列ハイライト (ダブルクォート、シングルクォート、テンプレートリテラル)
     escaped = escaped.replace(
         /(&quot;|")((?:(?!(?:&quot;|")).)*?)(&quot;|")/g,
-        '<span style="color:#a5d6a7">$1$2$3</span>'
+        `${TOKEN_STR}$1$2$3${TOKEN_END}`
     );
     escaped = escaped.replace(
         /(&#39;|')((?:(?!(?:&#39;|')).)*?)(&#39;|')/g,
-        '<span style="color:#a5d6a7">$1$2$3</span>'
+        `${TOKEN_STR}$1$2$3${TOKEN_END}`
     );
 
     // コメントハイライト
     escaped = escaped.replace(
         /(\/\/.*$|#(?!include|define).*$)/gm,
-        '<span style="color:#6a737d;font-style:italic">$1</span>'
+        `${TOKEN_COM}$1${TOKEN_END}`
     );
 
     // 数値ハイライト
     escaped = escaped.replace(
         /\b(\d+\.?\d*)\b/g,
-        '<span style="color:#f8c555">$1</span>'
+        `${TOKEN_NUM}$1${TOKEN_END}`
     );
 
     // キーワードのハイライト
@@ -68,9 +74,17 @@ function highlightCode(code: string, language: string): string {
         const regex = new RegExp(`\\b(${kw})\\b`, "g");
         escaped = escaped.replace(
             regex,
-            `<span style="color:#c792ea;font-weight:600">$1</span>`
+            `${TOKEN_KW}$1${TOKEN_END}`
         );
     });
+
+    // トークンをHTMLタグに変換
+    escaped = escaped
+        .replace(/___TOK_STR___/g, '<span style="color:#a5d6a7">')
+        .replace(/___TOK_COM___/g, '<span style="color:#6a737d;font-style:italic">')
+        .replace(/___TOK_NUM___/g, '<span style="color:#f8c555">')
+        .replace(/___TOK_KW___/g, '<span style="color:#c792ea;font-weight:600">')
+        .replace(/___TOK_END___/g, '</span>');
 
     return escaped;
 }
@@ -87,6 +101,11 @@ export default function CodeViewer({
 
     return (
         <div className="code-viewer" style={maxHeight ? { maxHeight, overflow: "auto" } : undefined}>
+            {filename && (
+                <div className="code-viewer-header">
+                    <span>📄 {filename}</span>
+                </div>
+            )}
             <div className="code-line-numbers">
                 {showLineNumbers && (
                     <div className="line-numbers">

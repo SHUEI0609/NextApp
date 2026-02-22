@@ -5,7 +5,6 @@ import { FiPlus, FiTrash2, FiSave, FiSend } from "react-icons/fi";
 import {
     SUPPORTED_LANGUAGES,
     LANGUAGE_DISPLAY_NAMES,
-    SupportedLanguage,
 } from "@/types/types";
 import { inferLanguageFromFilename } from "@/lib/utils";
 
@@ -16,11 +15,14 @@ interface FileEntry {
     language: string;
 }
 
+import { useRouter } from "next/navigation";
+
 /**
  * 投稿作成ページ
  * タイトル、説明文、タグ、コードファイル（複数対応）の入力フォーム
  */
 export default function NewPostPage() {
+    const router = useRouter();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [mainLanguage, setMainLanguage] = useState<string>("typescript");
@@ -63,27 +65,46 @@ export default function NewPostPage() {
 
     const handleSubmit = async (isDraft: boolean) => {
         setIsSubmitting(true);
-        // TODO: API呼び出し
-        const postData = {
-            title,
-            description,
-            language: mainLanguage,
-            tags: tagsInput
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean),
-            isDraft,
-            files: files.map((f) => ({
-                filename: f.filename,
-                content: f.content,
-                language: f.language,
-            })),
-        };
-        console.log("投稿データ:", postData);
-        setTimeout(() => {
-            setIsSubmitting(false);
+        try {
+            const postData = {
+                title,
+                description,
+                language: mainLanguage,
+                tags: tagsInput
+                    .split(",")
+                    .map((t) => t.trim())
+                    .filter(Boolean),
+                isDraft,
+                files: files.map((f) => ({
+                    filename: f.filename,
+                    content: f.content,
+                    language: f.language,
+                })),
+            };
+
+            const res = await fetch("/api/posts", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(postData),
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                throw new Error(errorData.error || "投稿に失敗しました");
+            }
+
             alert(isDraft ? "下書きに保存しました" : "投稿しました！");
-        }, 1000);
+
+            if (!isDraft) {
+                router.push("/");
+            }
+        } catch (error: unknown) {
+            console.error("投稿エラー:", error);
+            const errorMessage = error instanceof Error ? error.message : "予期せぬエラーが発生しました";
+            alert(errorMessage);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const activeFile = files[activeFileIndex];

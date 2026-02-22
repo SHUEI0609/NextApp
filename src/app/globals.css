@@ -909,6 +909,7 @@ img {
 
 /* --- 認証ページ --- */
 .auth-page {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;

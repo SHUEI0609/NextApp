@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FiSearch } from "react-icons/fi";
 import {
@@ -16,18 +16,13 @@ import PostCard from "@/components/PostCard";
  */
 function SearchContent() {
     const searchParams = useSearchParams();
-    const initialQuery = searchParams.get("q") || "";
-    const initialTag = searchParams.get("tag") || "";
 
-    const [query, setQuery] = useState(initialQuery);
-    const [selectedTag, setSelectedTag] = useState(initialTag);
+    // Why: queryはinputフィールドでユーザーが直接編集するためuseStateで管理する。
+    // URLパラメータの変更にはkeyを使ってコンポーネントをリマウントして対応する（下部のSearchPage参照）。
+    const [query, setQuery] = useState(searchParams.get("q") || "");
+    // Why: selectedTagはURLパラメータとタグボタンの両方から変更されるためuseStateで管理する。
+    const [selectedTag, setSelectedTag] = useState(searchParams.get("tag") || "");
     const [selectedLanguage, setSelectedLanguage] = useState("");
-
-    // URLパラメータの変更を監視
-    useEffect(() => {
-        setQuery(searchParams.get("q") || "");
-        setSelectedTag(searchParams.get("tag") || "");
-    }, [searchParams]);
 
     // 検索結果のフィルタリング
     const filteredPosts = MOCK_POSTS.filter((post) => {
@@ -216,6 +211,16 @@ function SearchContent() {
     );
 }
 
+/**
+ * Why: SearchContentのkeyにsearchParamsを渡すことで、URLパラメータ変更時に
+ * コンポーネントをリマウントし、useStateの初期値を再評価させる。
+ * これにより useEffect + setState のカスケードレンダリングを回避できる。
+ */
+function SearchWrapper() {
+    const searchParams = useSearchParams();
+    return <SearchContent key={searchParams.toString()} />;
+}
+
 export default function SearchPage() {
     return (
         <div className="main-layout">
@@ -228,7 +233,7 @@ export default function SearchPage() {
                             </div>
                         }
                     >
-                        <SearchContent />
+                        <SearchWrapper />
                     </Suspense>
                 </div>
             </main>
