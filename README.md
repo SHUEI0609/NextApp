@@ -2,7 +2,7 @@
 
 エンジニアやプログラミング学習者が、自身が書いたコード（スニペット〜複数ファイルのプロジェクト）を気軽に投稿・共有できるプラットフォームです。閲覧者は多様な言語のコードから学びを得て、いいねやブックマークで作品を評価・管理できます。UI/UX は Pixiv をベンチマークとし、直感的でスムーズな操作性を目指して開発しました。
 
-- **公開 URL:** [https://your-app.vercel.app](https://your-app.vercel.app)  <!-- ← デプロイ後に差し替え -->
+- **公開 URL:** [https://nextappcode.vercel.app/](https://nextappcode.vercel.app/)  <!-- ← デプロイ後に差し替え -->
 - **GitHub:** [https://github.com/shuei0609/NextApp](https://github.com/shuei0609/NextApp)
 
 ---
