@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import PostDetailClient from "./PostDetailClient";
 import { notFound } from "next/navigation";
+import { auth } from "@/lib/auth";
 
 export default async function PostDetailPage({
     params,
@@ -8,6 +9,8 @@ export default async function PostDetailPage({
     params: Promise<{ id: string }>;
 }) {
     const { id } = await params;
+    const session = await auth();
+    const currentUserId = session?.user?.id;
 
     const post = await prisma.post.findUnique({
         where: { id },
@@ -78,5 +81,5 @@ export default async function PostDetailPage({
         })),
     };
 
-    return <PostDetailClient post={postData} />;
+    return <PostDetailClient post={postData} currentUserId={currentUserId} />;
 }

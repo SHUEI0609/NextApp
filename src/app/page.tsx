@@ -3,8 +3,8 @@ import PostCard from "@/components/PostCard";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { calculateTrendScore } from "@/lib/utils";
+import { auth } from "@/lib/auth";
 
-// サーバサイドキャッシュを無効化（Vercel デプロイ時のキャッシュ問題を回避）
 export const revalidate = 0;
 export const dynamic = "force-dynamic";
 
@@ -20,22 +20,60 @@ export default async function HomePage({
   const resolvedSearchParams = await searchParams;
   const activeTab = (resolvedSearchParams.tab as string) || "trend";
 
+  const session = await auth();
+  const currentUserId = session?.user?.id;
+
+  // 1. Where句の構築
+  const whereClause: import("@/generated/prisma/client").Prisma.PostWhereInput = { isDraft: false };
+
+  // 未ログインでフォロー中タブを開いた場合は投稿を取得しない
+  const skipFetch = activeTab === "following" && !currentUserId;
+
+  if (activeTab === "following" && currentUserId) {
+    const following = await prisma.follow.findMany({
+      where: { followerId: currentUserId },
+      select: { followingId: true },
+    });
+    const followingIds = following.map((f) => f.followingId);
+    whereClause.authorId = { in: followingIds };
+  }
+
   // DBから投稿を取得
-  const posts = await prisma.post.findMany({
-    where: { isDraft: false },
+  const posts = skipFetch ? [] : await prisma.post.findMany({
+    where: whereClause,
     include: {
       author: true,
       files: true,
-      likes: true,
       _count: {
-        select: { likes: true, comments: true },
+        select: { likes: true, comments: true, bookmarks: true },
       },
     },
     orderBy: { createdAt: "desc" }, // 基本は降順で取得
-    take: 50,
+    take: activeTab === "trend" ? 200 : 50,
   });
 
-  // タブに応じたソートとフィルタリング
+  // いいねとブックマーク状態の取得
+  let userLikes = new Set<string>();
+  let userBookmarks = new Set<string>();
+
+  if (currentUserId && posts.length > 0) {
+    const postIds = posts.map(p => p.id);
+    const [likes, bookmarks] = await Promise.all([
+      prisma.like.findMany({
+        where: { userId: currentUserId, postId: { in: postIds } },
+        select: { postId: true }
+      }),
+      prisma.bookmark.findMany({
+        where: { userId: currentUserId, postId: { in: postIds } },
+        select: { postId: true }
+      })
+    ]);
+
+    userLikes = new Set(likes.map(l => l.postId));
+    userBookmarks = new Set(bookmarks.map(b => b.postId));
+  }
+
+  // タブに応じたソートとデータ加工
   let displayPosts = [...posts];
 
   if (activeTab === "trend") {
@@ -44,12 +82,33 @@ export default async function HomePage({
         calculateTrendScore(b._count.likes, b.createdAt.toISOString()) -
         calculateTrendScore(a._count.likes, a.createdAt.toISOString())
     );
-  } else if (activeTab === "latest") {
-    // 取得時に既に降順ソート済み
-  } else if (activeTab === "following") {
-    // TODO: フォロー機能実装後に修正
-    displayPosts = posts.slice(0, 3);
+    displayPosts = displayPosts.slice(0, 50);
   }
+
+  const sanitizedPosts = displayPosts.map(post => ({
+    ...post,
+    createdAt: post.createdAt.toISOString(),
+    updatedAt: post.updatedAt.toISOString(),
+    isLiked: userLikes.has(post.id),
+    isBookmarked: userBookmarks.has(post.id),
+    viewCount: post.viewCount || 0,
+    _count: {
+      likes: post._count.likes,
+      comments: post._count.comments,
+      bookmarks: post._count.bookmarks || 0,
+    },
+    author: {
+      id: post.authorId || post.author?.id,
+      name: post.author?.name || "Unknown",
+      image: post.author?.image || null,
+    },
+    files: post.files?.map((f) => ({
+      id: f.id,
+      filename: f.filename,
+      content: f.content,
+      language: f.language,
+    })) || [],
+  })) as unknown as import("@/types/types").PostCardData[];
 
   return (
     <div className="main-layout">
@@ -82,22 +141,9 @@ export default async function HomePage({
 
           {/* 投稿一覧 */}
           <div className="post-grid">
-            {displayPosts.length > 0 ? (
-              displayPosts.map((post) => {
-                // PostCardData型に合わせるための変換
-                const postCardData = {
-                  ...post,
-                  isLiked: false, // TODO: ログインユーザーの「いいね」状態
-                  isBookmarked: false, // TODO: ログインユーザーの「ブックマーク」状態
-                  viewCount: 0, // TODO: 閲覧数機能
-                  _count: {
-                    likes: post._count.likes,
-                    comments: post._count.comments,
-                    bookmarks: 0, // TODO: ブックマーク数
-                  },
-                } as unknown as import("@/types/types").PostCardData;
-
-                return <PostCard key={post.id} post={postCardData} />;
+            {sanitizedPosts.length > 0 ? (
+              sanitizedPosts.map((postData) => {
+                return <PostCard key={postData.id} post={postData} />;
               })
             ) : (
               <div className="empty-state">

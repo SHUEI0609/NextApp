@@ -64,6 +64,14 @@ export default function Header() {
                             >
                                 {session.user.name || session.user.email}
                             </span>
+                            <Link
+                                href={`/users/${session.user.id}`}
+                                className="btn btn-ghost"
+                                title="マイページ"
+                                style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}
+                            >
+                                <span className="hide-mobile">マイページ</span>
+                            </Link>
                             <button
                                 className="btn btn-ghost"
                                 onClick={handleSignOut}

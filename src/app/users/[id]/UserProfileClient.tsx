@@ -10,15 +10,19 @@ import { formatRelativeTime } from "@/lib/utils";
 interface UserProfileClientProps {
     user: UserProfile;
     posts: PostCardData[];
+    likedPosts: PostCardData[];
+    bookmarkedPosts: PostCardData[];
     currentUserId?: string;
 }
 
 export default function UserProfileClient({
     user,
     posts,
+    likedPosts,
+    bookmarkedPosts,
     currentUserId,
 }: UserProfileClientProps) {
-    const [activeTab, setActiveTab] = useState<"posts" | "likes">("posts");
+    const [activeTab, setActiveTab] = useState<"posts" | "likes" | "bookmarks">("posts");
     const [isFollowing, setIsFollowing] = useState(user.isFollowing || false);
     const [followersCount, setFollowersCount] = useState(user._count.followers);
     const [isLoading, setIsLoading] = useState(false);
@@ -128,8 +132,16 @@ export default function UserProfileClient({
                         className={`tab ${activeTab === "likes" ? "active" : ""}`}
                         onClick={() => setActiveTab("likes")}
                     >
-                        いいねした作品
+                        いいねした作品 ({likedPosts.length})
                     </button>
+                    {isOwnProfile && (
+                        <button
+                            className={`tab ${activeTab === "bookmarks" ? "active" : ""}`}
+                            onClick={() => setActiveTab("bookmarks")}
+                        >
+                            ブックマーク ({bookmarkedPosts.length})
+                        </button>
+                    )}
                 </div>
 
                 {/* タブコンテンツ */}
@@ -147,9 +159,27 @@ export default function UserProfileClient({
                     )}
 
                     {activeTab === "likes" && (
-                        <div className="empty-state">
-                            <p className="empty-state-text">準備中です</p>
-                        </div>
+                        likedPosts.length > 0 ? (
+                            likedPosts.map((post) => (
+                                <PostCard key={post.id} post={post} />
+                            ))
+                        ) : (
+                            <div className="empty-state">
+                                <p className="empty-state-text">まだいいねした投稿がありません</p>
+                            </div>
+                        )
+                    )}
+
+                    {activeTab === "bookmarks" && isOwnProfile && (
+                        bookmarkedPosts.length > 0 ? (
+                            bookmarkedPosts.map((post) => (
+                                <PostCard key={post.id} post={post} />
+                            ))
+                        ) : (
+                            <div className="empty-state">
+                                <p className="empty-state-text">まだブックマークした投稿がありません</p>
+                            </div>
+                        )
                     )}
                 </div>
             </main>

@@ -12,10 +12,18 @@ import {
 import { formatRelativeTime } from "@/lib/utils";
 import UserAvatar, { TagBadge, LanguageBadge } from "@/components/UserAvatar";
 import { FileTabsViewer } from "@/components/CodeViewer";
+import { useRouter } from "next/navigation";
 import { CommentData, PostCardData } from "@/types/types";
 import toast from "react-hot-toast";
 
-export default function PostDetailClient({ post }: { post: PostCardData | null }) {
+export default function PostDetailClient({
+    post,
+    currentUserId
+}: {
+    post: PostCardData | null,
+    currentUserId?: string
+}) {
+    const router = useRouter();
     const [isLiked, setIsLiked] = useState(post?.isLiked || false);
     const [isBookmarked, setIsBookmarked] = useState(
         post?.isBookmarked || false
@@ -86,6 +94,33 @@ export default function PostDetailClient({ post }: { post: PostCardData | null }
         }
     };
 
+    const handleDelete = async () => {
+        if (!post) return;
+        if (!window.confirm("この投稿を削除しますか？\n削除すると元に戻せません。")) return;
+
+        try {
+            const res = await fetch(`/api/posts/${post.id}`, {
+                method: "DELETE",
+            });
+
+            if (!res.ok) {
+                const errorData = await res.json();
+                toast.error(errorData.error || "投稿の削除に失敗しました");
+                return;
+            }
+
+            toast.success("投稿を削除しました");
+            router.push("/");
+            // キャッシュ無効化はサーバー側で行われるか、または Next.js の router.refresh() が必要になる場合があります
+            router.refresh();
+        } catch (error) {
+            console.error("投稿削除エラー:", error);
+            toast.error("サーバーとの通信に失敗しました");
+        }
+    };
+
+    const isOwnPost = currentUserId === post?.author.id;
+
     return (
         <div className="main-layout">
             <main className="main-content">
@@ -125,6 +160,16 @@ export default function PostDetailClient({ post }: { post: PostCardData | null }
                             </Link>
 
                             <div className="post-detail-actions">
+                                {isOwnPost && (
+                                    <>
+                                        <Link href={`/posts/${post.id}/edit`} className="btn btn-secondary">
+                                            編集
+                                        </Link>
+                                        <button className="btn btn-danger" onClick={handleDelete}>
+                                            削除
+                                        </button>
+                                    </>
+                                )}
                                 <button
                                     className={`btn ${isLiked ? "btn-danger" : "btn-secondary"}`}
                                     onClick={handleLike}

@@ -47,13 +47,72 @@ export default async function UserProfilePage({
         },
     });
 
+    // ユーザーがいいねした投稿一覧
+    const likedPostsQuery = await prisma.like.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: "desc" },
+        include: {
+            post: {
+                include: {
+                    author: true,
+                    files: true,
+                    _count: {
+                        select: { likes: true, comments: true, bookmarks: true },
+                    },
+                },
+            },
+        },
+    });
+    const likedPosts = likedPostsQuery.map((like) => like.post);
+
+    // ユーザーがブックマークした投稿一覧
+    const bookmarkedPostsQuery = await prisma.bookmark.findMany({
+        where: { userId: id },
+        orderBy: { createdAt: "desc" },
+        include: {
+            post: {
+                include: {
+                    author: true,
+                    files: true,
+                    _count: {
+                        select: { likes: true, comments: true, bookmarks: true },
+                    },
+                },
+            },
+        },
+    });
+    const bookmarkedPosts = bookmarkedPostsQuery.map((bookmark) => bookmark.post);
+
+    type RawPost = {
+        createdAt: Date;
+        updatedAt: Date;
+        viewCount?: number;
+        _count: {
+            likes: number;
+            comments: number;
+            bookmarks: number;
+        };
+        authorId?: string | null;
+        author?: {
+            id: string;
+            name: string | null;
+            image: string | null;
+        } | null;
+        files?: {
+            id: string;
+            filename: string;
+            content: string;
+            language: string;
+        }[];
+    };
+
     // クライアントコンポーネントに渡すためのデータ整形
-    const postsData = posts.map(post => ({
+    const sanitizePostData = <T extends RawPost>(postList: T[]) => postList.map((post: T) => ({
         ...post,
         createdAt: post.createdAt.toISOString(),
         updatedAt: post.updatedAt.toISOString(),
-        isLiked: false, // TODO: ログインユーザーのいいね状態
-        isBookmarked: false, // TODO: ブックマーク状態
+        isLiked: false,
+        isBookmarked: false,
         viewCount: post.viewCount || 0,
         _count: {
             likes: post._count.likes,
@@ -61,17 +120,21 @@ export default async function UserProfilePage({
             bookmarks: post._count.bookmarks,
         },
         author: {
-            id: post.author.id,
-            name: post.author.name,
-            image: post.author.image,
+            id: post.authorId || post.author?.id,
+            name: post.author?.name || "Unknown",
+            image: post.author?.image || null,
         },
-        files: post.files.map(f => ({
+        files: post.files?.map((f) => ({
             id: f.id,
             filename: f.filename,
             content: f.content,
             language: f.language,
-        })),
+        })) || [],
     }));
+
+    const postsData = sanitizePostData(posts);
+    const formattedLikedPosts = sanitizePostData(likedPosts);
+    const formattedBookmarkedPosts = sanitizePostData(bookmarkedPosts);
 
     // 現在のユーザーがこのユーザーをフォローしているかどうかの判定
     let isFollowing = false;
@@ -102,6 +165,8 @@ export default async function UserProfilePage({
         <UserProfileClient
             user={userData}
             posts={postsData}
+            likedPosts={formattedLikedPosts}
+            bookmarkedPosts={formattedBookmarkedPosts}
             currentUserId={currentUserId}
         />
     );
