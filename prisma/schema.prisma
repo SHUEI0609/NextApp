@@ -2,8 +2,9 @@
 // Why: detail.mdの要件に基づき、ユーザー・投稿・ソーシャル機能のモデルを定義
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/generated/prisma"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+  output          = "../src/generated/prisma"
 }
 
 datasource db {
