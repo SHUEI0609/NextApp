@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { calculateTrendScore } from "@/lib/utils";
 
+// サーバサイドキャッシュを無効化（Vercel デプロイ時のキャッシュ問題を回避）
+export const revalidate = 0;
+export const dynamic = "force-dynamic";
+
 /**
  * トップページ - タイムライン
  * クエリパラメータ (?tab=trend|latest) でタブを切り替えるサーバーコンポーネント
