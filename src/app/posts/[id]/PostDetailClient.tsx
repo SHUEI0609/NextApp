@@ -13,6 +13,7 @@ import { formatRelativeTime } from "@/lib/utils";
 import UserAvatar, { TagBadge, LanguageBadge } from "@/components/UserAvatar";
 import { FileTabsViewer } from "@/components/CodeViewer";
 import { CommentData, PostCardData } from "@/types/types";
+import toast from "react-hot-toast";
 
 export default function PostDetailClient({ post }: { post: PostCardData | null }) {
     const [isLiked, setIsLiked] = useState(post?.isLiked || false);
@@ -21,7 +22,8 @@ export default function PostDetailClient({ post }: { post: PostCardData | null }
     );
     const [likeCount, setLikeCount] = useState(post?._count?.likes || 0);
     const [commentText, setCommentText] = useState("");
-    const [comments, setComments] = useState<CommentData[]>([]);
+    const [comments, setComments] = useState<CommentData[]>(post?.comments || []);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     if (!post) {
         return (
@@ -48,18 +50,40 @@ export default function PostDetailClient({ post }: { post: PostCardData | null }
         setIsBookmarked(!isBookmarked);
     };
 
-    const handleComment = (e: React.FormEvent) => {
+    const handleComment = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!commentText.trim()) return;
+        if (!commentText.trim() || isSubmitting) return;
 
-        const newComment: CommentData = {
-            id: `c-new-${Date.now()}`,
-            content: commentText,
-            createdAt: new Date().toISOString(),
-            user: { id: "current-user", name: "ゲストユーザー", image: null },
-        };
-        setComments([...comments, newComment]);
-        setCommentText("");
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`/api/posts/${post.id}/comments`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ content: commentText }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                if (res.status === 401) {
+                    toast.error("コメントするにはログインが必要です");
+                } else {
+                    toast.error(data.message || "コメントの送信に失敗しました");
+                }
+                return;
+            }
+
+            const newComment = await res.json();
+            setComments([...comments, newComment]);
+            setCommentText("");
+            toast.success("コメントを投稿しました");
+        } catch (error) {
+            console.error("コメント送信エラー:", error);
+            toast.error("サーバーとの通信に失敗しました");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -168,9 +192,9 @@ export default function PostDetailClient({ post }: { post: PostCardData | null }
                                     <button
                                         type="submit"
                                         className="btn btn-primary btn-sm"
-                                        disabled={!commentText.trim()}
+                                        disabled={!commentText.trim() || isSubmitting}
                                     >
-                                        送信
+                                        {isSubmitting ? "送信中..." : "送信"}
                                     </button>
                                 </div>
                             </div>

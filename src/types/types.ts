@@ -32,6 +32,7 @@ export interface PostCardData {
     };
     isLiked?: boolean;
     isBookmarked?: boolean;
+    comments?: CommentData[];
 }
 
 /** ユーザープロフィール型 */

@@ -14,6 +14,20 @@ export default async function PostDetailPage({
         include: {
             author: true,
             files: true,
+            comments: {
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            name: true,
+                            image: true,
+                        }
+                    }
+                },
+                orderBy: {
+                    createdAt: "asc"
+                }
+            },
             _count: {
                 select: {
                     likes: true,
@@ -51,6 +65,16 @@ export default async function PostDetailPage({
             filename: f.filename,
             content: f.content,
             language: f.language,
+        })),
+        comments: post.comments.map(c => ({
+            id: c.id,
+            content: c.content,
+            createdAt: c.createdAt.toISOString(),
+            user: {
+                id: c.user.id,
+                name: c.user.name,
+                image: c.user.image,
+            }
         })),
     };
 
