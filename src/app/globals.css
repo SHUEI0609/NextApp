@@ -1126,23 +1126,48 @@ img {
 /* --- レスポンシブ --- */
 @media (max-width: 768px) {
   :root {
-    --sidebar-width: 0;
+    --sidebar-width: 100%;
+  }
+
+  .main-layout {
+    flex-direction: column;
   }
 
   .header {
     padding: 0 var(--space-3);
   }
 
+  .header-logo {
+    font-size: var(--text-lg);
+  }
+
+  .header-logo-icon {
+    width: 30px;
+    height: 30px;
+    font-size: var(--text-base);
+  }
+
   .header-search {
-    display: none;
+    flex: 1;
+    min-width: 0;
+    margin: 0 var(--space-2);
+  }
+
+  .header-actions {
+    gap: var(--space-2);
   }
 
   .sidebar {
-    display: none;
+    width: 100%;
+    height: auto;
+    position: static;
+    border-left: none;
+    border-top: 1px solid var(--color-border);
+    padding: var(--space-4);
   }
 
   .main-content {
-    padding: var(--space-4);
+    padding: var(--space-3);
   }
 
   .profile-header {
@@ -1168,6 +1193,12 @@ img {
   .file-tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .code-line-numbers .line-numbers {
+    padding: var(--space-3) var(--space-2);
+    min-width: 36px;
+    font-size: var(--text-xs);
   }
 }
 
