@@ -393,6 +393,11 @@ img {
   display: block;
   text-decoration: none;
   color: inherit;
+  min-width: 0;
+  /* フレックス/グリッドコンテナのサイズ拡張防止 */
+  word-wrap: break-word;
+  /* 長い単語の折り返し */
+  overflow-wrap: break-word;
 }
 
 .post-card:hover {
@@ -432,6 +437,7 @@ img {
   color: var(--color-text-primary);
   margin-bottom: var(--space-2);
   line-height: 1.4;
+  word-break: break-word;
 }
 
 .post-card-description {
@@ -475,6 +481,9 @@ img {
   line-height: 1.6;
   color: var(--color-text-secondary);
   overflow: hidden;
+  white-space: pre-wrap;
+  /* コードのはみ出しを防ぎ折り返す */
+  word-break: break-all;
 }
 
 .post-card-meta {
@@ -1123,8 +1132,21 @@ img {
   animation: slideUp var(--transition-base) ease forwards;
 }
 
+/* --- ユーティリティ --- */
+.mobile-only {
+  display: none !important;
+}
+
 /* --- レスポンシブ --- */
 @media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: inline-flex !important;
+  }
+
   :root {
     --sidebar-width: 100%;
   }
@@ -1188,6 +1210,27 @@ img {
 
   .post-detail-title {
     font-size: var(--text-2xl);
+  }
+
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: var(--space-1);
+    -ms-overflow-style: none;
+    /* IE, Edge */
+    scrollbar-width: none;
+    /* Firefox */
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari */
+  }
+
+  .tab {
+    white-space: nowrap;
+    padding: var(--space-2) var(--space-3);
   }
 
   .file-tabs {

@@ -93,7 +93,6 @@ export default function Header() {
                     <button
                         className="btn btn-ghost btn-icon mobile-only"
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        style={{ display: "none" }}
                     >
                         {mobileMenuOpen ? <FiX /> : <FiMenu />}
                     </button>

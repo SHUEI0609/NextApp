@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
 import Header from "@/components/Header";
@@ -19,6 +19,13 @@ export const metadata: Metadata = {
   title: "Codex - エンジニアのためのコード共有プラットフォーム",
   description:
     "エンジニアやプログラミング学習者が、自身のコードを気軽に投稿・共有できるプラットフォーム。多様な言語のコードから学びを得よう。",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({

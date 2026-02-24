@@ -4,7 +4,7 @@ import { useState } from "react";
 import UserAvatar from "@/components/UserAvatar";
 import PostCard from "@/components/PostCard";
 import { UserProfile, PostCardData } from "@/types/types";
-import { FiUsers, FiFileText } from "react-icons/fi";
+
 import { formatRelativeTime } from "@/lib/utils";
 
 interface UserProfileClientProps {
@@ -58,70 +58,61 @@ export default function UserProfileClient({
         <div className="main-layout">
             <main className="main-content">
                 {/* ユーザープロフィールヘッダー */}
-                <div className="profile-header" style={{
-                    padding: "var(--space-6)",
-                    backgroundColor: "var(--bg-card)",
-                    borderRadius: "var(--radius-lg)",
-                    border: "1px solid var(--border)",
-                    marginBottom: "var(--space-6)",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "var(--space-4)"
-                }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                        <div style={{ display: "flex", gap: "var(--space-4)", alignItems: "center" }}>
-                            <UserAvatar name={user.name} image={user.image} size="lg" />
-                            <div>
-                                <h1 style={{ fontSize: "var(--text-2xl)", fontWeight: "bold", margin: 0 }}>
-                                    {user.name || "名称未設定ユーザー"}
-                                </h1>
-                                <p style={{ color: "var(--text-muted)", margin: "var(--space-1) 0 0 0", fontSize: "var(--text-sm)" }}>
-                                    @{user.id.slice(0, 8)} • 参加日: {formatRelativeTime(user.createdAt)}
-                                </p>
-                            </div>
-                        </div>
+                <div className="profile-header">
+                    <UserAvatar name={user.name} image={user.image} size="lg" />
 
-                        {/* アクションボタン */}
-                        <div>
-                            {isOwnProfile ? (
-                                <button className="btn btn-secondary">
-                                    プロフィールを編集
-                                </button>
-                            ) : (
-                                <button
-                                    className={`btn ${isFollowing ? "btn-secondary" : "btn-primary"}`}
-                                    onClick={handleFollowToggle}
-                                    disabled={isLoading}
-                                >
-                                    {isFollowing ? "フォロー中" : "フォローする"}
-                                </button>
-                            )}
+                    <div className="profile-info">
+                        <h1 className="profile-name">
+                            {user.name || "名称未設定ユーザー"}
+                        </h1>
+                        <p style={{ color: "var(--color-text-tertiary)", fontSize: "var(--text-sm)", marginBottom: "var(--space-3)" }}>
+                            @{user.id.slice(0, 8)} • 参加日: {formatRelativeTime(user.createdAt)}
+                        </p>
+
+                        {/* 自己紹介文 */}
+                        {user.bio && (
+                            <p className="profile-bio">
+                                {user.bio}
+                            </p>
+                        )}
+
+                        {/* 統計情報 */}
+                        <div className="profile-stats">
+                            <div className="profile-stat">
+                                <div className="profile-stat-value">{user._count.following}</div>
+                                <div className="profile-stat-label">フォロー中</div>
+                            </div>
+                            <div className="profile-stat">
+                                <div className="profile-stat-value">{followersCount}</div>
+                                <div className="profile-stat-label">フォロワー</div>
+                            </div>
+                            <div className="profile-stat">
+                                <div className="profile-stat-value">{user._count.posts}</div>
+                                <div className="profile-stat-label">投稿</div>
+                            </div>
                         </div>
                     </div>
 
-                    {/* 自己紹介文 */}
-                    {user.bio && (
-                        <p style={{ marginTop: "var(--space-2)", lineHeight: 1.5 }}>
-                            {user.bio}
-                        </p>
-                    )}
-
-                    {/* 統計情報 */}
-                    <div style={{ display: "flex", gap: "var(--space-4)", marginTop: "var(--space-2)", color: "var(--text-muted)" }}>
-                        <span style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
-                            <FiUsers /> <span style={{ fontWeight: "bold", color: "var(--text-main)" }}>{user._count.following}</span> フォロー中
-                        </span>
-                        <span style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
-                            <FiUsers /> <span style={{ fontWeight: "bold", color: "var(--text-main)" }}>{followersCount}</span> フォロワー
-                        </span>
-                        <span style={{ display: "flex", alignItems: "center", gap: "var(--space-1)" }}>
-                            <FiFileText /> <span style={{ fontWeight: "bold", color: "var(--text-main)" }}>{user._count.posts}</span> 投稿
-                        </span>
+                    {/* アクションボタン */}
+                    <div className="profile-actions">
+                        {isOwnProfile ? (
+                            <button className="btn btn-secondary">
+                                プロフィールを編集
+                            </button>
+                        ) : (
+                            <button
+                                className={`btn ${isFollowing ? "btn-secondary" : "btn-primary"}`}
+                                onClick={handleFollowToggle}
+                                disabled={isLoading}
+                            >
+                                {isFollowing ? "フォロー中" : "フォローする"}
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 {/* タブナビゲーション */}
-                <div className="tabs" style={{ marginBottom: "var(--space-4)" }}>
+                <div className="tabs">
                     <button
                         className={`tab ${activeTab === "posts" ? "active" : ""}`}
                         onClick={() => setActiveTab("posts")}
@@ -145,7 +136,7 @@ export default function UserProfileClient({
                 </div>
 
                 {/* タブコンテンツ */}
-                <div className="tab-content" style={{ display: "flex", flexDirection: "column", gap: "var(--space-4)" }}>
+                <div className="post-grid">
                     {activeTab === "posts" && (
                         posts.length > 0 ? (
                             posts.map((post) => (
