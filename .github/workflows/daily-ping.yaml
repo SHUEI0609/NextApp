@@ -14,7 +14,7 @@ jobs:
     steps:
       - name: Send HTTP GET request
         run: |
-          curl -X GET "https://your-app.vercel.app/" -v --fail || exit 1
+          curl -X GET "https://codeapp-pi.vercel.app/" -v --fail || exit 1
       - name: Log request time
         run: |
           echo "Keep-alive ping completed at $(date)"
