@@ -45,13 +45,40 @@ export default async function PostDetailPage({
         notFound();
     }
 
+    let isLiked = false;
+    let isBookmarked = false;
+
+    if (currentUserId) {
+        const [likeResult, bookmarkResult] = await Promise.all([
+            prisma.like.findUnique({
+                where: {
+                    userId_postId: {
+                        userId: currentUserId,
+                        postId: id,
+                    },
+                },
+            }),
+            prisma.bookmark.findUnique({
+                where: {
+                    userId_postId: {
+                        userId: currentUserId,
+                        postId: id,
+                    },
+                },
+            }),
+        ]);
+
+        isLiked = !!likeResult;
+        isBookmarked = !!bookmarkResult;
+    }
+
     // クライアントコンポーネントに渡すためのデータ整形（ビュー数など不足分を補完）
     const postData = {
         ...post,
         createdAt: post.createdAt.toISOString(),
         updatedAt: post.updatedAt.toISOString(),
-        isLiked: false, // TODO: ログインユーザーのいいね状態
-        isBookmarked: false, // TODO: ブックマーク状態
+        isLiked,
+        isBookmarked,
         viewCount: 0, // TODO: 閲覧数
         _count: {
             likes: post._count.likes,

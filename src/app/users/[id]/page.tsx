@@ -83,7 +83,28 @@ export default async function UserProfilePage({
     });
     const bookmarkedPosts = bookmarkedPostsQuery.map((bookmark) => bookmark.post);
 
+    // ログインユーザーがいいね・ブックマークしている投稿のIDリストを取得
+    let userLikedPostIds = new Set<string>();
+    let userBookmarkedPostIds = new Set<string>();
+
+    if (currentUserId) {
+        const [userLikes, userBookmarks] = await Promise.all([
+            prisma.like.findMany({
+                where: { userId: currentUserId },
+                select: { postId: true },
+            }),
+            prisma.bookmark.findMany({
+                where: { userId: currentUserId },
+                select: { postId: true },
+            }),
+        ]);
+
+        userLikedPostIds = new Set(userLikes.map((l) => l.postId));
+        userBookmarkedPostIds = new Set(userBookmarks.map((b) => b.postId));
+    }
+
     type RawPost = {
+        id: string;
         createdAt: Date;
         updatedAt: Date;
         viewCount?: number;
@@ -111,8 +132,8 @@ export default async function UserProfilePage({
         ...post,
         createdAt: post.createdAt.toISOString(),
         updatedAt: post.updatedAt.toISOString(),
-        isLiked: false,
-        isBookmarked: false,
+        isLiked: userLikedPostIds.has(post.id),
+        isBookmarked: userBookmarkedPostIds.has(post.id),
         viewCount: post.viewCount || 0,
         _count: {
             likes: post._count.likes,

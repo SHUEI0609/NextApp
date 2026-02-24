@@ -49,13 +49,65 @@ export default function PostDetailClient({
         );
     }
 
-    const handleLike = () => {
+    const handleLike = async () => {
+        if (!currentUserId) {
+            toast.error("いいねするにはログインが必要です");
+            return;
+        }
+
+        // Optimistic UI update
         setIsLiked(!isLiked);
         setLikeCount((prev: number) => (isLiked ? prev - 1 : prev + 1));
+
+        try {
+            const res = await fetch(`/api/posts/${post.id}/like`, {
+                method: "POST",
+            });
+
+            if (!res.ok) {
+                // Revert if failed
+                setIsLiked(isLiked);
+                setLikeCount((prev: number) => (isLiked ? prev + 1 : prev - 1));
+                toast.error("いいねの処理に失敗しました");
+            }
+        } catch (error) {
+            console.error("Like error:", error);
+            // Revert if failed
+            setIsLiked(isLiked);
+            setLikeCount((prev: number) => (isLiked ? prev + 1 : prev - 1));
+            toast.error("通信エラーが発生しました");
+        }
     };
 
-    const handleBookmark = () => {
+    const handleBookmark = async () => {
+        if (!currentUserId) {
+            toast.error("ブックマークするにはログインが必要です");
+            return;
+        }
+
+        // Optimistic UI update
         setIsBookmarked(!isBookmarked);
+
+        try {
+            const res = await fetch(`/api/posts/${post.id}/bookmark`, {
+                method: "POST",
+            });
+
+            if (!res.ok) {
+                // Revert if failed
+                setIsBookmarked(isBookmarked);
+                toast.error("ブックマークの処理に失敗しました");
+            } else {
+                if (!isBookmarked) {
+                    toast.success("ブックマークに保存しました");
+                }
+            }
+        } catch (error) {
+            console.error("Bookmark error:", error);
+            // Revert if failed
+            setIsBookmarked(isBookmarked);
+            toast.error("通信エラーが発生しました");
+        }
     };
 
     const handleComment = async (e: React.FormEvent) => {
